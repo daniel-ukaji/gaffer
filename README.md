@@ -34,8 +34,10 @@ Four small modules:
 
 - `src/match.mjs` — pure domain: pot, free predictions, winner logic, pot split
 - `src/agent.mjs` — WDK treasury (gasless ERC-4337) + the mandate (tx policies)
-- `src/settlement.mjs` — the settle engine (one code path; sim or live)
-- `gaffer-demo.mjs` — runnable end-to-end story
+- `src/settlement.mjs` — the settle engine (sim = `simulate`, no broadcast; live = real)
+- `src/feed.mjs` — match feed: goal/full-time events drive settlement (sim + real-adapter shape)
+- `gaffer-demo.mjs` — scripted end-to-end story
+- `gaffer-live.mjs` — a match plays out (auto or keypress-driven) and the final whistle pays out
 
 ## Run it
 
@@ -54,7 +56,16 @@ npm run demo
 npm run demo:live
 ```
 
-## Spikes (foundation proofs)
+### Live match → payout
+
+```bash
+npm run live         # a compressed match auto-plays; full time triggers settlement (SIM)
+npm run live:real    # same, but real gasless payouts (needs .env + funded treasury)
+npm run live:play    # you drive it: h = home goal, a = away goal, f = full time
+```
+
+> SIM never broadcasts — it uses WDK's `account.simulate.transfer` to get the real
+> ALLOW/DENY mandate verdict with zero on-chain effect. LIVE sends real gasless USDT.
 
 ```bash
 npm run spike:policy    # offline: mandate denies an over-cap spend

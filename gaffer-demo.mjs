@@ -80,8 +80,8 @@ for (const p of report.payouts) {
     li(`     https://sepolia.etherscan.io/tx/${p.txHash}`)
   } else if (p.status === 'submitted') {
     li(`✅ paid ${usdt(p.amount)} → ${who}   [accepted, mining] userOp ${p.userOpHash.slice(0, 14)}…`)
-  } else if (p.status === 'allowed_pending') {
-    li(`✅ ${usdt(p.amount)} → ${who}   [mandate ALLOWED; settles on funding]`)
+  } else if (p.status === 'planned') {
+    li(`✅ ${usdt(p.amount)} → ${who}   [mandate ALLOWED — sim, no broadcast]`)
   } else if (p.status === 'blocked') {
     li(`⛔ ${usdt(p.amount)} → ${who}   BLOCKED: ${p.reason}`)
   } else {

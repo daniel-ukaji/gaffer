@@ -1,15 +1,16 @@
 // Gaffer — settlement engine.
 //
 // The heart of the demo: a result comes in, the agent settles the fixed prize
-// pot to the correct predictors as gasless USDT payouts, each one passing
-// through the WDK mandate before it can broadcast.
+// pot to the correct predictors as gasless USDT payouts, each one gated by the
+// WDK mandate.
 //
-// One code path, two truths:
-//   • live=false (unfunded): every ALLOWED payout passes the mandate then stops
-//     at the funding boundary — proving the winner logic + mandate without money.
-//   • live=true  (funded):   the same call sends real gasless USDT and returns a
-//     transaction hash.
-// Either way, an over-mandate payout is DENIED by policy, pre-broadcast.
+// Two honest modes, same policy engine, NO accidental spends:
+//   • live=false (SIM): each payout is evaluated with `account.simulate.transfer`
+//     — the real mandate verdict (ALLOW/DENY) with ZERO broadcast. Proves the
+//     winner logic and the guardrail without moving a cent.
+//   • live=true  (LIVE): `account.transfer` actually sends gasless USDT and we
+//     wait for on-chain inclusion, capturing the real tx hash.
+// Over-mandate payouts are DENIED either way (pre-broadcast).
 
 import { PolicyViolationError } from './agent.mjs'
 
@@ -29,38 +30,41 @@ export async function settleMatch(agent, match, { live = false } = {}) {
   for (const { recipient, amount } of payouts) {
     const rec = { recipient, amount, status: 'pending' }
     try {
-      const res = await account.transfer({ token: agent.token, recipient, amount })
-      rec.userOpHash = res.hash
-      agent.recordSpend(amount) // keeps the session-budget rule honest
       if (live) {
+        const res = await account.transfer({ token: agent.token, recipient, amount })
+        rec.userOpHash = res.hash
+        agent.recordSpend(amount)
         // Payouts from one smart account serialize on its nonce: a later UserOp
         // can't be included until the earlier one mines, or the bundler drops it.
-        // So we wait for on-chain inclusion before sending the next payout.
         rec.txHash = await waitForInclusion(account, res.hash)
-        rec.status = rec.txHash ? 'paid' : 'submitted' // submitted = accepted, mining slow
+        rec.status = rec.txHash ? 'paid' : 'submitted'
       } else {
-        rec.status = 'paid'
+        // SIM: real mandate verdict, no broadcast.
+        const verdict = await account.simulate.transfer({ token: agent.token, recipient, amount })
+        if (verdict.decision === 'DENY') {
+          rec.status = 'blocked'
+          rec.reason = verdict.reason
+          rec.rule = verdict.matched_rule
+        } else {
+          rec.status = 'planned'
+          agent.recordSpend(amount) // advance the session budget as if paid
+        }
       }
     } catch (e) {
       if (e instanceof PolicyViolationError) {
         rec.status = 'blocked'
         rec.reason = e.reason
         rec.rule = e.ruleName
-      } else if (live) {
+      } else {
         rec.status = 'failed'
         rec.error = short(e)
-      } else {
-        // Unfunded sim: mandate ALLOWED it; it stopped at the funding/bundler edge.
-        rec.status = 'allowed_pending'
-        rec.note = short(e)
-        agent.recordSpend(amount) // simulate the spend so session budget advances
       }
     }
     results.push(rec)
   }
 
   const distributed = results
-    .filter((r) => r.status === 'paid' || r.status === 'allowed_pending')
+    .filter((r) => r.status === 'paid' || r.status === 'submitted' || r.status === 'planned')
     .reduce((s, r) => s + r.amount, 0n)
 
   match.status = 'settled'

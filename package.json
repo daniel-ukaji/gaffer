@@ -7,6 +7,9 @@
   "scripts": {
     "demo": "node --env-file-if-exists=.env gaffer-demo.mjs",
     "demo:live": "LIVE=1 node --env-file-if-exists=.env gaffer-demo.mjs",
+    "live": "node --env-file-if-exists=.env gaffer-live.mjs",
+    "live:real": "LIVE=1 node --env-file-if-exists=.env gaffer-live.mjs",
+    "live:play": "node --env-file-if-exists=.env gaffer-live.mjs --interactive",
     "spike:policy": "node spike/spike3-policy.mjs",
     "spike:x402": "node spike/spike2-x402.mjs",
     "spike:gasless": "node spike/spike1-gasless.mjs",
