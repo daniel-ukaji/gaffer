@@ -5,8 +5,8 @@
   "type": "module",
   "description": "The Gaffer — a self-custodial match-day treasury agent. Tether Developers Cup (WDK track).",
   "scripts": {
-    "demo": "node gaffer-demo.mjs",
-    "demo:live": "LIVE=1 node gaffer-demo.mjs",
+    "demo": "node --env-file-if-exists=.env gaffer-demo.mjs",
+    "demo:live": "LIVE=1 node --env-file-if-exists=.env gaffer-demo.mjs",
     "spike:policy": "node spike/spike3-policy.mjs",
     "spike:x402": "node spike/spike2-x402.mjs",
     "spike:gasless": "node spike/spike1-gasless.mjs",

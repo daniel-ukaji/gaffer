@@ -75,10 +75,18 @@ const report = await settleMatch(agent, match, { live: LIVE })
 li(`winners: ${report.winners.length} (exact scoreline 2-1)`)
 for (const p of report.payouts) {
   const who = nameOf(p.recipient)
-  if (p.status === 'paid') li(`✅ paid ${usdt(p.amount)} → ${who}   tx ${p.hash}`)
-  else if (p.status === 'allowed_pending') li(`✅ ${usdt(p.amount)} → ${who}   [mandate ALLOWED; settles on funding]`)
-  else if (p.status === 'blocked') li(`⛔ ${usdt(p.amount)} → ${who}   BLOCKED: ${p.reason}`)
-  else li(`⚠️  ${usdt(p.amount)} → ${who}   ${p.error || p.note}`)
+  if (p.status === 'paid') {
+    li(`✅ paid ${usdt(p.amount)} → ${who}`)
+    li(`     https://sepolia.etherscan.io/tx/${p.txHash}`)
+  } else if (p.status === 'submitted') {
+    li(`✅ paid ${usdt(p.amount)} → ${who}   [accepted, mining] userOp ${p.userOpHash.slice(0, 14)}…`)
+  } else if (p.status === 'allowed_pending') {
+    li(`✅ ${usdt(p.amount)} → ${who}   [mandate ALLOWED; settles on funding]`)
+  } else if (p.status === 'blocked') {
+    li(`⛔ ${usdt(p.amount)} → ${who}   BLOCKED: ${p.reason}`)
+  } else {
+    li(`⚠️  ${usdt(p.amount)} → ${who}   ${p.error || p.note}`)
+  }
 }
 li('distributed: ' + usdt(report.distributed) + (report.rollover ? '  rollover: ' + usdt(report.rollover) : ''))
 li('agent session spend: ' + usdt(agent.spent) + ' / budget ' + usdt(agent.mandate.sessionCap))

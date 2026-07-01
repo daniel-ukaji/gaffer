@@ -30,9 +30,17 @@ export async function settleMatch(agent, match, { live = false } = {}) {
     const rec = { recipient, amount, status: 'pending' }
     try {
       const res = await account.transfer({ token: agent.token, recipient, amount })
-      rec.status = 'paid'
-      rec.hash = res.hash
+      rec.userOpHash = res.hash
       agent.recordSpend(amount) // keeps the session-budget rule honest
+      if (live) {
+        // Payouts from one smart account serialize on its nonce: a later UserOp
+        // can't be included until the earlier one mines, or the bundler drops it.
+        // So we wait for on-chain inclusion before sending the next payout.
+        rec.txHash = await waitForInclusion(account, res.hash)
+        rec.status = rec.txHash ? 'paid' : 'submitted' // submitted = accepted, mining slow
+      } else {
+        rec.status = 'paid'
+      }
     } catch (e) {
       if (e instanceof PolicyViolationError) {
         rec.status = 'blocked'
@@ -70,3 +78,22 @@ export async function settleMatch(agent, match, { live = false } = {}) {
 }
 
 const short = (e) => (e?.message || String(e)).slice(0, 120)
+
+/**
+ * Wait for a UserOperation to be included on-chain, returning its real
+ * transaction hash (or null if it doesn't confirm within the timeout).
+ * @param {any} account - WDK ERC-4337 account (has getUserOperationReceipt).
+ * @param {string} userOpHash
+ * @param {number} [timeoutMs=120000]
+ * @param {number} [pollMs=4000]
+ */
+async function waitForInclusion(account, userOpHash, timeoutMs = 120000, pollMs = 4000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const receipt = await account.getUserOperationReceipt?.(userOpHash).catch(() => null)
+    const txHash = receipt?.receipt?.transactionHash || receipt?.transactionHash
+    if (txHash) return txHash
+    await new Promise((r) => setTimeout(r, pollMs))
+  }
+  return null
+}
