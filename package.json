@@ -1,0 +1,25 @@
+{
+  "name": "gaffer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Gaffer — a self-custodial match-day treasury agent. Tether Developers Cup (WDK track).",
+  "scripts": {
+    "demo": "node gaffer-demo.mjs",
+    "demo:live": "LIVE=1 node gaffer-demo.mjs",
+    "spike:policy": "node spike/spike3-policy.mjs",
+    "spike:x402": "node spike/spike2-x402.mjs",
+    "spike:gasless": "node spike/spike1-gasless.mjs",
+    "spike:send": "node spike/spike1b-send.mjs"
+  },
+  "dependencies": {
+    "@tetherto/wdk": "1.0.0-beta.12",
+    "@tetherto/wdk-wallet-evm": "1.0.0-beta.14",
+    "@tetherto/wdk-wallet-evm-erc-4337": "1.0.0-beta.10",
+    "@x402/evm": "2.17.0",
+    "@x402/fetch": "2.17.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
