@@ -10,6 +10,8 @@
     "live": "node --env-file-if-exists=.env gaffer-live.mjs",
     "live:real": "LIVE=1 node --env-file-if-exists=.env gaffer-live.mjs",
     "live:play": "node --env-file-if-exists=.env gaffer-live.mjs --interactive",
+    "x402": "node --env-file-if-exists=.env gaffer-x402.mjs",
+    "x402:real": "LIVE=1 node --env-file-if-exists=.env gaffer-x402.mjs",
     "spike:policy": "node spike/spike3-policy.mjs",
     "spike:x402": "node spike/spike2-x402.mjs",
     "spike:gasless": "node spike/spike1-gasless.mjs",

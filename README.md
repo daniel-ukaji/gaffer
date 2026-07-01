@@ -50,8 +50,10 @@ Four small modules:
 - `src/agent.mjs` — WDK treasury (gasless ERC-4337) + the mandate (tx policies)
 - `src/settlement.mjs` — the settle engine (sim = `simulate`, no broadcast; live = real)
 - `src/feed.mjs` — match feed: goal/full-time events drive settlement (sim + real-adapter shape)
+- `src/paidData.mjs` — the agent pays per-request in USDT (x402) to buy match data
 - `gaffer-demo.mjs` — scripted end-to-end story
 - `gaffer-live.mjs` — a match plays out (auto or keypress-driven) and the final whistle pays out
+- `gaffer-x402.mjs` — the full loop: agent *buys* data (x402) **and** *pays out* the pot
 
 ## Run it
 
@@ -81,18 +83,37 @@ npm run live:play    # you drive it: h = home goal, a = away goal, f = full time
 > SIM never broadcasts — it uses WDK's `account.simulate.transfer` to get the real
 > ALLOW/DENY mandate verdict with zero on-chain effect. LIVE sends real gasless USDT.
 
+### Agent buys data, then pays out (x402)
+
+```bash
+npm run x402         # agent pays USDT per-request for match data, then settles (SIM)
+npm run x402:real    # same, with real gasless payouts
+```
+
+The agent pays a paywalled data service **per HTTP request** in USDT (x402:
+`402 → sign → 200`), signing an EIP-3009 authorization with its WDK wallet — no
+adapter. One run shows both directions of agentic USDT commerce: agent-to-service
+(buying data) and agent-to-fan (paying the pot).
+
 ```bash
 npm run spike:policy    # offline: mandate denies an over-cap spend
 npm run spike:x402      # local mock: WDK wallet signs an x402 payment (402→200)
 npm run spike:send      # real: land a gasless UserOp on Sepolia (needs PIMLICO_KEY)
 ```
 
-## Roadmap (post-core)
+## Roadmap
 
-- Live match-feed adapter (+ a "simulate goal" control for the demo)
-- x402-paid match data buy by the agent (`@x402/fetch` + `@x402/evm` — wired in spikes)
-- React Native app (WDK RN starter + UI Kit) — the fan-facing crew screens
-- ZK-shielded contributions (individual amounts private, pot total auditable)
+Done:
+- [x] Gasless ERC-4337 payouts (real, on-chain)
+- [x] Policy-enforced spending mandate
+- [x] Live match-feed → settlement (+ a "simulate goal" control)
+- [x] x402-paid match data buy by the agent
+
+Next:
+- [ ] Real match-feed provider adapter (drop-in behind the same feed events)
+- [ ] React Native app (WDK RN starter + UI Kit) — the fan-facing crew screens
+- [ ] ZK-shielded contributions (individual amounts private, pot total auditable)
+- [ ] Batched-payout mode (all winners in one UserOp)
 
 ## Stack
 
