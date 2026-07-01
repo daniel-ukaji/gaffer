@@ -24,6 +24,20 @@ mined on-chain: [tx](https://sepolia.etherscan.io/tx/0x9f1af31d08c39e8b349101550
 | x402 pay-per-request (WDK signs) | 402 → sign → 200, no adapter needed |
 | Mandate / spending cap | over-cap payout DENIED in ~2ms, pre-broadcast |
 
+### On-chain proof (Sepolia)
+
+The full loop — a match's final whistle paying correct predictors, gasless — has
+run for real. Sample transactions (owner held **0 ETH**; gas sponsored):
+
+| What | Transaction |
+| --- | --- |
+| First gasless UserOp (also deployed the Safe) | [`0x9f1af31d…`](https://sepolia.etherscan.io/tx/0x9f1af31d08c39e8b349101550a0d78b5a9263f7ac4d9258f460446982c3060a9) |
+| Payout → correct predictor (15 USD₮) | [`0xa1703372…`](https://sepolia.etherscan.io/tx/0xa170337200218b5fb85d9fd55c820ebddcc0fe38960ddf5bcfbd093186b95215) |
+| Payout → correct predictor (15 USD₮) | [`0xd0875275…`](https://sepolia.etherscan.io/tx/0xd0875275da8334a6a17574b33d647a3b263231ac762ffdcfc9cc94aa25f029a8) |
+
+Reproduce it yourself with `npm run live:real` (see below). The wrong predictor
+receives nothing; an over-mandate payout is refused before it can broadcast.
+
 ## The core loop
 
 ```
